@@ -28,6 +28,10 @@ User reactions to v2 → all implemented: (1) rotation ON by default (pieces spa
 
 Play-feel deltas for ticket 06: rotation-default-on and border-frame-snapping are user decisions made here; bevel realism still to be judged (user: "still not looking realistic" pre-bevel — v3 verdict pending).
 
+### Iteration 5 (2026-07-30)
+
+Borrowed from grrd's Puzzle source dive (user approved): default tab size settled at 15; **grid assist** (toggleable cell outlines on the board, image-neutral placement help); **drag clamping** to board + scatter ring (±0.45·W/H) via the held piece, so no cluster can be flung out of reach — verified: an 8000px synthetic fling stopped exactly on the bounds corner. Orientation-aware presets + "gold" multiplier + completion ding + persisted assist toggles left for tickets 06/07.
+
 ### Iteration 4 (third user reaction, 2026-07-30)
 
 (1) Bevels toned down (alpha 0.16/0.11, narrower, smaller offset). (2) User insight: difficulty ≠ just piece count — shape complexity/confusability matters. Exposed the generator's two shape axes as sliders + URL params: **tab** (10–40, Draradech units; small knobs = subtler joins = harder) and **vary** (jitter 0–13; LOW variety = pieces look alike = harder — verified at tab 12/vary 0: near-identical squares). Difficulty space for the plan is now 4-dimensional: piece count × rotation × tab size × shape variety — ticket 06 should fold these into named presets rather than exposing raw sliders in the real app.
