@@ -19,10 +19,10 @@ A committed build plan — `SPEC.md` at the repo root — for a client-only web 
 
 - [Cut generation approaches](issues/01-cut-generation.md) — roll our own seeded bezier-tab generator on Draradech's CC0 math (no viable library); pieces as SVG path strings → Path2D, sprites clipped once at load, hit-test in piece-local space.
 - [Rendering & interaction tech](issues/02-rendering-tech.md) — PixiJS v8 + vanilla TS + Vite; Pieces as UV-mapped triangulated meshes from one ≤4096² photo atlas (no per-piece masks), Polygon hitArea makes rotation free, Pointer Events for all gestures.
+- [Photo ingestion pitfalls](issues/03-photo-ingestion.md) — pipeline: file input → `createImageBitmap({imageOrientation, resizeWidth})` → worker slicing → IndexedDB Blobs (downscaled re-encode) + `navigator.storage.persist()`; HEIC wasm fallback outside Safari; cap ~2048px long edge for iOS canvas limits.
 
 ## Not yet specified
 
-- **Persistence model** — how save/resume, the Library, and best times are stored client-side (storage API, image storage, quotas). Sharpens after [Photo ingestion pitfalls](issues/03-photo-ingestion.md) — quota realities may make it a non-decision.
 - **Difficulty presets** — piece-count tiers and what else varies per tier (rotation on/off?). Sharpens after [Play-feel decisions](issues/06-play-feel.md).
 - **Polish layer** — sound, haptics, completion celebration, PWA install/offline. Sharpens once the core loop feels good in the spike.
 
