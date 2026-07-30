@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# personal photos stay out of history
+/kagemusha.jpg
+prototypes/core-spike/public/photo.jpg

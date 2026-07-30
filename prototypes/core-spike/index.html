@@ -1,0 +1,95 @@
+<!doctype html>
+<!-- PROTOTYPE — core spike (v1-plan ticket 05). Throwaway: answers "does seeded
+     bezier-tab cut + Pixi rendering feel right to drag, snap, rotate?" -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>jigsaw core spike</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1b1f; }
+  body { display: flex; flex-direction: column; }
+  #app { flex: 1; min-height: 0; position: relative; touch-action: none; overflow: hidden; }
+  #app canvas { display: block; }
+  #bar {
+    flex: none;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+    background: rgba(20,20,24,.85); color: #ddd; font: 13px system-ui;
+    padding: 8px 12px;
+  }
+  #bar label { display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+  #status { color: #9a9; }
+  #solved {
+    position: fixed; inset: 0; display: none; place-items: center;
+    font: bold 48px system-ui; color: #fff; text-shadow: 0 2px 12px #000;
+    pointer-events: none;
+  }
+  #ref {
+    position: fixed; top: 12px; right: 12px;
+    max-width: 18vw; max-height: 30vh;
+    border: 2px solid rgba(255,255,255,.25); border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    pointer-events: none; /* pieces under it stay draggable */
+  }
+  #lib {
+    position: fixed; inset: 0; display: none; place-items: center;
+    background: rgba(10,10,14,.75); z-index: 10;
+  }
+  #libbox {
+    background: #232329; border-radius: 12px; padding: 18px;
+    width: min(92vw, 640px); max-height: 80vh; overflow: auto;
+    color: #ddd; font: 14px system-ui;
+  }
+  #libbox h2 { margin: 0 0 6px; font-size: 18px; }
+  #cards {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px; margin: 12px 0;
+  }
+  .card { background: #2c2c33; border-radius: 8px; padding: 8px; cursor: pointer; position: relative; }
+  .card img { width: 100%; border-radius: 6px; display: block; }
+  .cname { margin-top: 6px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmeta { color: #9a9; font-size: 12px; }
+  .card .del { position: absolute; top: 4px; right: 4px; }
+  #librow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: #3a3a44; border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<img id="ref" alt="reference" style="display:none" />
+<div id="bar">
+  <label>pieces
+    <select id="n">
+      <option>12</option><option selected>24</option><option>48</option>
+      <option>96</option><option>192</option><option>300</option>
+    </select>
+  </label>
+  <label><input type="checkbox" id="rot" checked /> rotation</label>
+  <label><input type="checkbox" id="ghost" checked /> reference</label>
+  <label><input type="checkbox" id="grid" checked /> grid</label>
+  <label>snap <input type="range" id="tol" min="8" max="40" value="18" style="width:70px" /></label>
+  <label title="tab size — smaller knobs are subtler and harder">tab <input type="range" id="tab" min="10" max="40" value="15" style="width:60px" /></label>
+  <label title="shape variety — LOW makes pieces look alike (harder)">vary <input type="range" id="jit" min="0" max="13" value="4" style="width:60px" /></label>
+  <button id="scatter">scatter</button>
+  <button id="recut">new cut</button>
+  <button id="games">games</button>
+  <span id="status"></span>
+</div>
+<div id="solved">SOLVED 🎉</div>
+<div id="lib">
+  <div id="libbox">
+    <h2>Puzzles</h2>
+    <div id="libempty">No puzzles yet — add a photo or try the demo image.</div>
+    <div id="cards"></div>
+    <div id="librow">
+      <label class="btn">+ new from photo<input type="file" id="file" accept="image/*" hidden /></label>
+      <button id="demo">demo image</button>
+      <button id="libclose">close</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
