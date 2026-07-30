@@ -86,9 +86,10 @@ rotation (shadow layer may switch to a single baked texture if needed);
 pointer edge cases (pointercancel, second-finger-on-piece pinch).
 
 **M4 — Ship.** PWA: manifest + service-worker precache (offline play), icon;
-fullscreen button (grrd borrow). Deploy: static `vite build` served from the
-tailnet VM via `tailscale serve` (HTTPS for PWA install); deploy stays manual
-per operator habit. App name/icon: tunable, decide at ship time.
+fullscreen button (grrd borrow). Deploy (revised 2026-07-30: public reach for
+non-technical players beats tailnet): public GitHub repo + GitHub Pages via
+Actions on push to main, app at https://liukrimhrim.github.io/jigsaw/
+(`base: '/jigsaw/'`). Photos still never leave the player's device.
 
 ## Out of scope (map verdicts — do not drift)
 
