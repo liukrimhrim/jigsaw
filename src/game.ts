@@ -10,11 +10,47 @@ let refURL: string | null = null
 
 export function getRec() { return rec }
 
+/** mean color of the photo → muted backdrop with opposite lightness (contrast) */
+function paletteBackdrop(bmp: ImageBitmap): { bgColor: number; onLight: boolean } {
+  const c = document.createElement('canvas')
+  c.width = c.height = 16
+  const x = c.getContext('2d')!
+  x.drawImage(bmp, 0, 0, 16, 16)
+  const d = x.getImageData(0, 0, 16, 16).data
+  let r = 0, g = 0, b = 0
+  for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2] }
+  const n = d.length / 4
+  r /= n * 255; g /= n * 255; b /= n * 255
+  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  // hue of the mean color (harmonious), saturation muted, lightness flipped
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn
+  let h = 0
+  if (dl > 0.001) {
+    if (mx === r) h = ((g - b) / dl + 6) % 6
+    else if (mx === g) h = (b - r) / dl + 2
+    else h = (r - g) / dl + 4
+    h *= 60
+  }
+  const s = mx === 0 ? 0 : dl / mx
+  const onLight = lum < 0.5
+  const L = onLight ? 0.68 : 0.12
+  const S = Math.min(0.22, s * 0.5 + 0.06)
+  // hsl → rgb
+  const a = S * Math.min(L, 1 - L)
+  const f = (k0: number) => {
+    const k = (k0 + h / 30) % 12
+    return L - a * Math.max(-1, Math.min(k - 3, 9 - k, 1))
+  }
+  const to255 = (v: number) => Math.round(v * 255)
+  return { bgColor: (to255(f(0)) << 16) | (to255(f(8)) << 8) | to255(f(4)), onLight }
+}
+
 export async function startGame(r: PuzzleRec): Promise<void> {
   rec = r
   const bmp = await createImageBitmap(r.photo)
   texture?.destroy(true)
   texture = Texture.from(bmp)
+  const backdrop = paletteBackdrop(bmp)
 
   const ref = document.getElementById('ref') as HTMLImageElement
   if (refURL) URL.revokeObjectURL(refURL)
@@ -22,7 +58,7 @@ export async function startGame(r: PuzzleRec): Promise<void> {
   ref.src = refURL
   ref.style.display = (document.getElementById('ghost') as HTMLInputElement).checked ? 'block' : 'none'
 
-  board.buildBoard({ w: r.w, h: r.h, cols: r.cols, rows: r.rows, seed: r.seed, tab: r.tab, jit: r.jit }, texture)
+  board.buildBoard({ w: r.w, h: r.h, cols: r.cols, rows: r.rows, seed: r.seed, tab: r.tab, jit: r.jit, ...backdrop }, texture)
   if (!board.applyPoses(r.poses)) board.scatter()
   board.fitView()
   if (board.isSolved()) updateSolvedText() // restored solved save: banner text, no fanfare

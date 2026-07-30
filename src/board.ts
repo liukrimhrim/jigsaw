@@ -334,7 +334,12 @@ function rebuildClusters() {
 }
 
 // ---------- board construction ----------
-export interface BoardParams { w: number; h: number; cols: number; rows: number; seed: number; tab: number; jit: number }
+export interface BoardParams {
+  w: number; h: number; cols: number; rows: number; seed: number; tab: number; jit: number
+  /** palette-derived backdrop (contrast with the photo) and whether it's light */
+  bgColor: number
+  onLight: boolean
+}
 
 export function buildBoard(p: BoardParams, texture: Texture): void {
   W = p.w; H = p.h; cols = p.cols; rows = p.rows
@@ -342,18 +347,23 @@ export function buildBoard(p: BoardParams, texture: Texture): void {
   solvedNotified = false
   edgesOnly = false
 
+  // palette-adaptive backdrop: renderer clear color + the pan-surface rect
+  app.renderer.background.color = p.bgColor
+  bg.clear().rect(-16000, -16000, 32000, 32000).fill(p.bgColor)
+  const overlay = p.onLight ? 0x000000 : 0xffffff // board markings must read on either
+
   for (const c of world.removeChildren()) c.destroy({ children: true })
   solvedEl().style.display = 'none'
 
   const boardMark = new Graphics().rect(0, 0, W, H)
-    .fill({ color: 0xffffff, alpha: 0.035 })
-    .stroke({ width: 3, color: 0xffffff, alpha: 0.13 })
+    .fill({ color: overlay, alpha: 0.045 })
+    .stroke({ width: 3, color: overlay, alpha: 0.15 })
   world.addChild(boardMark)
 
   gridG = new Graphics()
   for (let xi = 1; xi < cols; xi++) gridG.moveTo(xi * (W / cols), 0).lineTo(xi * (W / cols), H)
   for (let yi = 1; yi < rows; yi++) gridG.moveTo(0, yi * (H / rows)).lineTo(W, yi * (H / rows))
-  gridG.stroke({ width: 2, color: 0xffffff, alpha: 0.05 })
+  gridG.stroke({ width: 2, color: overlay, alpha: 0.07 })
   gridG.visible = gridVisible
   world.addChild(gridG)
 

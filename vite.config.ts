@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
-  base: '/jigsaw/', // GitHub Pages project site
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/jigsaw/' : '/', // GitHub Pages project site; dev stays at root
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
@@ -26,4 +26,4 @@ export default defineConfig({
       },
     }),
   ],
-})
+}))
