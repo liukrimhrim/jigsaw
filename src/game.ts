@@ -3,7 +3,7 @@
 import { Texture } from 'pixi.js'
 import * as board from './board'
 import { t, tf } from './i18n'
-import { putPuzzle, type IngestResult, type PuzzleRec } from './store'
+import { decodePhoto, putPuzzle, type IngestResult, type PuzzleRec } from './store'
 
 let rec: PuzzleRec | null = null
 let texture: Texture | null = null
@@ -12,7 +12,7 @@ let refURL: string | null = null
 export function getRec() { return rec }
 
 /** mean color of the photo → muted backdrop with opposite lightness (contrast) */
-function paletteBackdrop(bmp: ImageBitmap): { bgColor: number; onLight: boolean } {
+function paletteBackdrop(bmp: ImageBitmap | HTMLImageElement): { bgColor: number; onLight: boolean } {
   const c = document.createElement('canvas')
   c.width = c.height = 16
   const x = c.getContext('2d')!
@@ -48,7 +48,7 @@ function paletteBackdrop(bmp: ImageBitmap): { bgColor: number; onLight: boolean 
 
 export async function startGame(r: PuzzleRec): Promise<void> {
   rec = r
-  const bmp = await createImageBitmap(r.photo)
+  const bmp = await decodePhoto(r.photo) // Safari-safe decode chain
   texture?.destroy(true)
   texture = Texture.from(bmp)
   const backdrop = paletteBackdrop(bmp)

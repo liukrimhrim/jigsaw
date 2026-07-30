@@ -41,14 +41,33 @@ const wrap = <T>(r: IDBRequest<T>) => new Promise<T>((res, rej) => {
   r.onerror = () => rej(r.error)
 })
 
+// Safari reads of IndexedDB-stored Blobs are unreliable (InvalidStateError:
+// "error reading the Blob"). Store ArrayBuffers; rehydrate Blobs at the
+// boundary. Old Blob-based records still rehydrate and self-migrate on the
+// next save.
+type StoredRec = Omit<PuzzleRec, 'photo' | 'thumb'> & {
+  photo: ArrayBuffer | Blob
+  thumb: ArrayBuffer | Blob
+}
+const asBlob = (v: ArrayBuffer | Blob): Blob =>
+  v instanceof Blob ? v : new Blob([v], { type: 'image/jpeg' })
+const rehydrate = (r: StoredRec | undefined): PuzzleRec | undefined =>
+  r && { ...r, photo: asBlob(r.photo), thumb: asBlob(r.thumb) }
+
 export async function putPuzzle(p: PuzzleRec): Promise<number> {
-  return (await wrap((await store('readwrite')).put(p))) as number
+  const stored: StoredRec = {
+    ...p,
+    photo: await p.photo.arrayBuffer(),
+    thumb: await p.thumb.arrayBuffer(),
+  }
+  return (await wrap((await store('readwrite')).put(stored))) as number
 }
 export async function getPuzzle(id: number): Promise<PuzzleRec | undefined> {
-  return (await wrap((await store('readonly')).get(id))) as PuzzleRec | undefined
+  return rehydrate((await wrap((await store('readonly')).get(id))) as StoredRec | undefined)
 }
 export async function listPuzzles(): Promise<PuzzleRec[]> {
-  return (await wrap((await store('readonly')).getAll())) as PuzzleRec[]
+  const all = (await wrap((await store('readonly')).getAll())) as StoredRec[]
+  return all.map((r) => rehydrate(r)!)
 }
 export async function deletePuzzle(id: number): Promise<void> {
   await wrap((await store('readwrite')).delete(id))
@@ -73,23 +92,46 @@ async function decodeHeic(blob: Blob): Promise<ImageBitmap> {
   return createImageBitmap(new ImageData(new Uint8ClampedArray(data), width, height))
 }
 
+/** most-compatible decoder: object URL + <img>.decode() (Safari-safe) */
+export async function imgDecode(blob: Blob): Promise<HTMLImageElement> {
+  const url = URL.createObjectURL(blob)
+  try {
+    const img = new Image()
+    img.src = url
+    await img.decode()
+    return img
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+/** any photo blob → drawable, surviving Safari's createImageBitmap(Blob) quirks */
+export async function decodePhoto(blob: Blob): Promise<ImageBitmap | HTMLImageElement> {
+  try {
+    return await createImageBitmap(blob, { imageOrientation: 'from-image' })
+  } catch {
+    return imgDecode(blob).catch(() => decodeHeic(blob))
+  }
+}
+
 /** file/blob → EXIF-corrected, ≤2048 long edge JPEG + 256px thumb */
 export async function ingestPhoto(blob: Blob): Promise<IngestResult> {
-  const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
-    .catch(() => decodeHeic(blob))
-  const scale = Math.min(1, 2048 / Math.max(bmp.width, bmp.height))
+  const bmp = await decodePhoto(blob)
+  const bw = bmp instanceof HTMLImageElement ? bmp.naturalWidth : bmp.width
+  const bh = bmp instanceof HTMLImageElement ? bmp.naturalHeight : bmp.height
+  const scale = Math.min(1, 2048 / Math.max(bw, bh))
   const enc = (s: number) => {
     const c = document.createElement('canvas')
-    c.width = Math.max(1, Math.round(bmp.width * s))
-    c.height = Math.max(1, Math.round(bmp.height * s))
+    c.width = Math.max(1, Math.round(bw * s))
+    c.height = Math.max(1, Math.round(bh * s))
     c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
     return new Promise<Blob>((res, rej) =>
       c.toBlob((b) => (b ? res(b) : rej(new Error('encode failed'))), 'image/jpeg', 0.85))
   }
   const photo = await enc(scale)
-  const thumb = await enc(Math.min(scale, 256 / Math.max(bmp.width, bmp.height)))
-  const w = Math.max(1, Math.round(bmp.width * scale))
-  const h = Math.max(1, Math.round(bmp.height * scale))
-  bmp.close()
+  const thumb = await enc(Math.min(scale, 256 / Math.max(bw, bh)))
+  const w = Math.max(1, Math.round(bw * scale))
+  const h = Math.max(1, Math.round(bh * scale))
+  if (bmp instanceof ImageBitmap) bmp.close()
   return { photo, thumb, w, h }
 }

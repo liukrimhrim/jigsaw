@@ -28,17 +28,20 @@ async function boot() {
   ui.initUI(qs)
 
   const gid = qs.get('g')
+  let opened = false
   if (gid) {
-    const r = await getPuzzle(parseInt(gid, 10))
-    if (r) {
-      await game.startGame(r)
-      ui.hideLib()
-    } else {
-      await ui.showLib()
+    try {
+      const r = await getPuzzle(parseInt(gid, 10))
+      if (r) {
+        await game.startGame(r)
+        ui.hideLib()
+        opened = true
+      }
+    } catch (e) {
+      console.error('failed to open puzzle', e) // corrupt record → land in the library
     }
-  } else {
-    await ui.showLib()
   }
+  if (!opened) await ui.showLib()
   ui.updateStatus()
 }
 boot().catch((e: unknown) => {
