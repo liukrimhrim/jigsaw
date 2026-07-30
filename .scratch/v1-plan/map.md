@@ -20,6 +20,7 @@ A committed build plan — `SPEC.md` at the repo root — for a client-only web 
 - [Cut generation approaches](issues/01-cut-generation.md) — roll our own seeded bezier-tab generator on Draradech's CC0 math (no viable library); pieces as SVG path strings → Path2D, sprites clipped once at load, hit-test in piece-local space.
 - [Rendering & interaction tech](issues/02-rendering-tech.md) — PixiJS v8 + vanilla TS + Vite; Pieces as UV-mapped triangulated meshes from one ≤4096² photo atlas (no per-piece masks), Polygon hitArea makes rotation free, Pointer Events for all gestures.
 - [Photo ingestion pitfalls](issues/03-photo-ingestion.md) — pipeline: file input → `createImageBitmap({imageOrientation, resizeWidth})` → worker slicing → IndexedDB Blobs (downscaled re-encode) + `navigator.storage.persist()`; HEIC wasm fallback outside Safari; cap ~2048px long edge for iOS canvas limits.
+- [Prior art scan](issues/04-prior-art.md) — Cluster-merge Snapping is the universal model; steal ghost toggle, edges-only filter, opt-in rotation, seconds-to-playing flow; skip all engagement bloat; grrd's Puzzle (MPL PWA) is an existence proof of our exact product.
 
 ## Not yet specified
 
