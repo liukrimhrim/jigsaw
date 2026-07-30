@@ -11,4 +11,6 @@ Photo-to-jigsaw web app. These are the project's terms — challenge and update 
 - **Puzzle** — a Photo + a Cut + progress (poses, Clusters, elapsed time). The unit that is played, saved, resumed, and listed.
 - **Library** — the on-device collection of Puzzles.
 
-Provisional (unresolved — see `.scratch/v1-plan/issues/06-play-feel.md`): **Tray** — a distinct holding area for unplaced Pieces, versus everything loose on the Board.
+- **Frame** — the Board's true boundary. Border Pieces close to their Frame position lock straight to it.
+
+Resolved 2026-07-30: there is **no Tray**. Unplaced Pieces lie loose in the margin bands around the Board on a pannable surface (see `.scratch/v1-plan/issues/06-play-feel.md`).

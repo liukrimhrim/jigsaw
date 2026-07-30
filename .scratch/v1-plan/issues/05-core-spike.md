@@ -1,7 +1,7 @@
 # Core spike: cut, drag, snap, rotate
 
 Type: prototype
-Status: claimed
+Status: resolved
 Blocked by: 01, 02
 
 ## Question
@@ -9,6 +9,10 @@ Blocked by: 01, 02
 Does the recommended cut + render approach actually feel right? Build a throwaway spike (via /prototype): load a real Photo, generate an interlocking Cut, drag Pieces with touch and mouse, Snap two correct neighbors into a Cluster, rotate a Piece. React to it together: does dragging stay crisp at a realistic piece count, does rotation work on touch, does the trialed stack candidate feel pleasant to build in? The spike is an asset linked from this ticket, not production code.
 
 Integration note from the two researches: the Cut generator must emit, per Piece, both the bezier path string AND a point-sampled outline polygon — Pixi's mesh route needs sampled points for earcut triangulation + `Polygon` hitArea, while the path string stays the source of truth (and the Canvas-2D fallback input).
+
+## Answer
+
+**Yes — the approach feels right.** User verdict after six reaction rounds: "looks good, move ahead." The recommended stack (PixiJS v8 + vanilla TS + Vite, own Draradech-port cut generator, texture-filled Graphics pieces) survived contact with a real photo at real piece counts, and the spike absorbed v1 features along the way (rotation default, frame snap, Library, save/resume). Asset: the spike code is committed on main at `prototypes/core-spike/` — no longer throwaway; it is the app seed (see map Notes execution override). Full iteration history below.
 
 ## Spike built — awaiting reaction
 
