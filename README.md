@@ -24,7 +24,8 @@ npm install
 npm run dev        # dev server
 npm test           # golden-file cut determinism
 npm run typecheck  # strict tsc
-npm run build      # production build (deployed by CI on push to main)
+npm run build      # production build
+npm run deploy     # build + publish to GitHub Pages (gh-pages branch)
 ```
 
 Engineering history lives in [SPEC.md](SPEC.md), [CONTEXT.md](CONTEXT.md), and the
