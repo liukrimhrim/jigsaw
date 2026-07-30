@@ -3,6 +3,7 @@
 
 import * as board from './board'
 import * as game from './game'
+import { applyStatic, getLang, setLang, t, tf } from './i18n'
 import * as sound from './sound'
 import { deletePuzzle, ingestPhoto, listPuzzles, storageInfo, type IngestResult } from './store'
 
@@ -29,7 +30,7 @@ const effectiveN = (k: PresetKey) =>
 
 function refreshPresetLabels() {
   for (const k of Object.keys(PRESETS) as PresetKey[])
-    document.getElementById('cnt-' + k)!.textContent = `${effectiveN(k)} pieces`
+    document.getElementById('cnt-' + k)!.textContent = `${effectiveN(k)} ${t('pieces')}`
 }
 
 // pending photo waiting for a difficulty choice
@@ -55,6 +56,11 @@ async function chooseCut(o: game.CutOptions) {
 
 // ---------- init ----------
 export function initUI(qs: URLSearchParams): void {
+  applyStatic()
+  const langBtn = document.getElementById('lang')!
+  langBtn.textContent = getLang() === 'zh' ? 'EN' : '中'
+  langBtn.onclick = () => setLang(getLang() === 'zh' ? 'en' : 'zh')
+
   // toggles: qs override → persisted pref → default
   const rot = qs.has('rot') ? qs.get('rot') !== '0' : pref('rot', true)
   $('rot').checked = rot
@@ -101,13 +107,13 @@ export function initUI(qs: URLSearchParams): void {
       hideLib()
       openNewGame({ kind: 'new', name: f.name.replace(/\.\w+$/, '') || 'photo', ing })
     } catch {
-      alert('could not read that image (HEIC outside Safari needs the planned wasm fallback)')
+      alert(t('heicFail'))
     }
   }
   document.getElementById('demo')!.onclick = async () => {
     const ing = await ingestPhoto(await game.demoBlob())
     hideLib()
-    openNewGame({ kind: 'new', name: 'demo', ing })
+    openNewGame({ kind: 'new', name: t('demoName'), ing })
   }
 
   document.getElementById('fs')!.onclick = () => {
@@ -157,8 +163,8 @@ export function updateStatus(): void {
   const rec = game.getRec()
   const c = board.counts()
   document.getElementById('status')!.textContent = rec
-    ? `${rec.name} · ${c.cols}×${c.rows} = ${c.pieces} pieces · ${c.clusters} clusters`
-    : 'no puzzle open — pick one from games'
+    ? `${rec.name} · ${c.cols}×${c.rows} = ${c.pieces} ${t('pieces')} · ${c.clusters} ${t('clusters')}`
+    : t('noPuzzle')
   document.getElementById('timer')!.textContent = rec ? game.fmt(rec.elapsedMs ?? 0) : ''
 }
 
@@ -202,7 +208,7 @@ export async function showLib(): Promise<void> {
     name.textContent = r.name
     const meta = document.createElement('div')
     meta.className = 'cmeta'
-    meta.textContent = `${r.cols * r.rows} pieces · ${r.solved ? `solved ✓ ${game.fmt(r.bestMs ?? r.elapsedMs ?? 0)}` : 'resume'}`
+    meta.textContent = `${r.cols * r.rows} ${t('pieces')} · ${r.solved ? `${t('solvedMark')} ${game.fmt(r.bestMs ?? r.elapsedMs ?? 0)}` : t('resume')}`
     const del = document.createElement('button')
     del.className = 'del'
     del.textContent = '✕'
@@ -222,8 +228,8 @@ export async function showLib(): Promise<void> {
 
   const info = await storageInfo()
   document.getElementById('libstore')!.textContent =
-    (info.usageMB != null ? `${info.usageMB} MB stored` : '') +
-    (info.persistent === false ? ' · ⚠ not persistent — the browser may evict saves after long inactivity' : '')
+    (info.usageMB != null ? tf('stored', { mb: info.usageMB }) : '') +
+    (info.persistent === false ? ` · ${t('evict')}` : '')
 }
 
 export function hideLib(): void { libEl().style.display = 'none' }

@@ -2,6 +2,7 @@
 
 import { Texture } from 'pixi.js'
 import * as board from './board'
+import { t, tf } from './i18n'
 import { putPuzzle, type IngestResult, type PuzzleRec } from './store'
 
 let rec: PuzzleRec | null = null
@@ -87,7 +88,7 @@ function updateSolvedText() {
   const e = rec.elapsedMs ?? 0
   const best = rec.bestMs
   document.getElementById('solvedtime')!.textContent =
-    best != null && best < e ? `${fmt(e)} · best ${fmt(best)}` : `${fmt(e)} · personal best!`
+    best != null && best < e ? `${fmt(e)}${tf('bestSuffix', { t: fmt(best) })}` : `${fmt(e)}${t('personalBest')}`
 }
 
 /** interactive solve: finalize time, best, banner text; caller adds sound/confetti */

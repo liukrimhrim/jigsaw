@@ -93,51 +93,52 @@
 <div id="loupe"></div>
 <div id="bar">
   <span id="timer"></span>
-  <label><input type="checkbox" id="rot" checked /> rotation</label>
-  <label><input type="checkbox" id="ghost" checked /> reference</label>
-  <label><input type="checkbox" id="grid" checked /> grid</label>
-  <label title="hide loose interior pieces while you build the frame"><input type="checkbox" id="edges" /> edges only</label>
-  <label><input type="checkbox" id="sound" checked /> sound</label>
-  <button id="scatter">scatter</button>
-  <button id="recut">re-cut</button>
-  <button id="games">games</button>
+  <label><input type="checkbox" id="rot" checked /> <span data-i18n="rotation">rotation</span></label>
+  <label><input type="checkbox" id="ghost" checked /> <span data-i18n="reference">reference</span></label>
+  <label><input type="checkbox" id="grid" checked /> <span data-i18n="grid">grid</span></label>
+  <label data-i18n-title="edgesTitle"><input type="checkbox" id="edges" /> <span data-i18n="edgesOnly">edges only</span></label>
+  <label><input type="checkbox" id="sound" checked /> <span data-i18n="sound">sound</span></label>
+  <button id="scatter" data-i18n="scatter">scatter</button>
+  <button id="recut" data-i18n="recut">re-cut</button>
+  <button id="games" data-i18n="games">puzzles</button>
   <button id="fs" title="fullscreen">⛶</button>
+  <button id="lang">中</button>
   <span id="status"></span>
 </div>
-<div id="solved"><div>SOLVED 🎉<div id="solvedtime"></div></div></div>
+<div id="solved"><div><span data-i18n="solvedBanner">SOLVED 🎉</span><div id="solvedtime"></div></div></div>
 <div id="newgame">
   <div id="ngbox">
-    <h2>New puzzle</h2>
+    <h2 data-i18n="ngTitle">New puzzle</h2>
     <div id="ngpresets">
-      <button class="preset" id="p-easy">easy<span id="cnt-easy"></span></button>
-      <button class="preset" id="p-medium">medium<span id="cnt-medium"></span></button>
-      <button class="preset" id="p-hard">hard<span id="cnt-hard"></span></button>
+      <button class="preset" id="p-easy"><span data-i18n="easy">easy</span><span id="cnt-easy"></span></button>
+      <button class="preset" id="p-medium"><span data-i18n="medium">medium</span><span id="cnt-medium"></span></button>
+      <button class="preset" id="p-hard"><span data-i18n="hard">hard</span><span id="cnt-hard"></span></button>
     </div>
-    <label id="chal"><input type="checkbox" id="challenge" /> challenge (≈2.5× pieces)</label>
+    <label id="chal"><input type="checkbox" id="challenge" /> <span data-i18n="challenge">challenge (≈2.5× pieces)</span></label>
     <details id="customx">
-      <summary>custom…</summary>
-      <label>pieces <input type="range" id="n" min="12" max="480" value="24" /> <span id="nval">24</span></label>
-      <label title="tab size — smaller knobs are subtler and harder">tab <input type="range" id="tab" min="10" max="40" value="15" /></label>
-      <label title="shape variety — LOW makes pieces look alike (harder)">vary <input type="range" id="jit" min="0" max="13" value="4" /></label>
-      <button id="customgo">start custom</button>
+      <summary data-i18n="customSummary">custom…</summary>
+      <label><span data-i18n="piecesLabel">pieces</span> <input type="range" id="n" min="12" max="480" value="24" /> <span id="nval">24</span></label>
+      <label data-i18n-title="tabTitle"><span data-i18n="tabLabel">tab</span> <input type="range" id="tab" min="10" max="40" value="15" /></label>
+      <label data-i18n-title="varyTitle"><span data-i18n="varyLabel">vary</span> <input type="range" id="jit" min="0" max="13" value="4" /></label>
+      <button id="customgo" data-i18n="startCustom">start custom</button>
     </details>
-    <button id="ngcancel">cancel</button>
+    <button id="ngcancel" data-i18n="cancel">cancel</button>
   </div>
 </div>
 <div id="lib">
   <div id="libbox">
-    <h2>Puzzles</h2>
-    <div id="libempty">No puzzles yet — add a photo or try the demo image.</div>
+    <h2 data-i18n="libTitle">Puzzles</h2>
+    <div id="libempty" data-i18n="libEmpty">No puzzles yet — add a photo or try the demo image.</div>
     <div id="cards"></div>
     <div id="librow">
-      <label class="btn">+ new from photo<input type="file" id="file" accept="image/*" hidden /></label>
-      <button id="demo">demo image</button>
-      <button id="libclose">close</button>
+      <label class="btn"><span data-i18n="newFromPhoto">+ new from photo</span><input type="file" id="file" accept="image/*" hidden /></label>
+      <button id="demo" data-i18n="demoImage">demo image</button>
+      <button id="libclose" data-i18n="close">close</button>
     </div>
     <div id="libstore" style="color:#777;font-size:12px;margin-top:8px"></div>
     <div id="installhint" style="color:#9a9;font-size:12px;margin-top:8px">
-      📲 This app installs: Chrome/Edge — “install” icon in the address bar · iPhone/iPad — Share → Add to Home Screen
-      <button id="hintok" style="margin-left:6px">got it</button>
+      <span data-i18n="installHint">📲 This app installs: Chrome/Edge — “install” icon in the address bar · iPhone/iPad — Share → Add to Home Screen</span>
+      <button id="hintok" style="margin-left:6px" data-i18n="gotIt">got it</button>
     </div>
   </div>
 </div>
