@@ -11,6 +11,7 @@ A committed build plan — `SPEC.md` at the repo root — for a client-only web 
 - Domain language lives in [CONTEXT.md](../../CONTEXT.md) — use its terms (Photo, Cut, Piece, Cluster, Snap, Board, Puzzle, Library) in every ticket.
 - Skills: /grilling + /domain-modeling for decision tickets, /prototype for the spike, /research for AFK tickets.
 - Standing prefs: lean builds — platform features before dependencies; client-only is a hard constraint, not a default.
+- Execution override (2026-07-30): at the user's direction, v1 features are being built directly into the spike (`prototypes/core-spike/`) through reaction rounds — the spike is graduating into the app seed. Tickets record what practice settles; the build-plan ticket codifies rather than re-decides.
 - Tracker: local markdown (this directory, per issue-tracker-local conventions). Research findings land as files in `research/` and are linked from tickets, not pasted in.
 
 ## Decisions so far
