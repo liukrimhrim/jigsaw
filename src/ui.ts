@@ -115,6 +115,28 @@ export function initUI(qs: URLSearchParams): void {
     else void document.documentElement.requestFullscreen()
   }
 
+  // reference loupe: hover the thumbnail → that region at full stored resolution
+  const ref = document.getElementById('ref') as HTMLImageElement
+  const loupe = document.getElementById('loupe') as HTMLElement
+  const updateLoupe = (e: PointerEvent) => {
+    const rec = game.getRec()
+    if (!rec) return
+    const r = ref.getBoundingClientRect()
+    const L = Math.max(140, Math.min(280, r.left - 24)) // fit left of the thumb
+    const u = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width))
+    const v = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))
+    loupe.style.width = `${L}px`
+    loupe.style.height = `${L}px`
+    loupe.style.left = `${r.left - L - 12}px`
+    loupe.style.top = `${Math.min(r.top, innerHeight - L - 12)}px`
+    loupe.style.backgroundImage = `url(${ref.src})`
+    loupe.style.backgroundSize = `${rec.w}px ${rec.h}px`
+    loupe.style.backgroundPosition = `${-(u * rec.w - L / 2)}px ${-(v * rec.h - L / 2)}px`
+  }
+  ref.onpointerenter = (e) => { loupe.style.display = 'block'; updateLoupe(e) }
+  ref.onpointermove = updateLoupe
+  ref.onpointerleave = () => { loupe.style.display = 'none' }
+
   // install hint: hide once dismissed or when already running installed
   const standalone = matchMedia('(display-mode: standalone)').matches
   const hint = document.getElementById('installhint') as HTMLElement
