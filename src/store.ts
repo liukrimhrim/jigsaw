@@ -1,4 +1,3 @@
-// PROTOTYPE — throwaway spike code, not production.
 // Persistence per the photo-ingestion research: IndexedDB, one 'puzzles' store;
 // photos stored as downscaled JPEG re-encodes (≤2048 long edge) + 256px thumbs;
 // progress = poses array (deterministic seed regenerates the Cut).
@@ -17,6 +16,8 @@ export interface PuzzleRec {
   jit: number
   poses: [number, number, number][] // per piece, row-major: x, y, angle
   solved: boolean
+  elapsedMs?: number // accrued play time (M2 wires the clock)
+  bestMs?: number    // personal best for this Puzzle
   createdAt: number
   updatedAt: number
 }
