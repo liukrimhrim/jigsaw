@@ -22,6 +22,12 @@ User reactions to v1: (1) "cut is weird, edges of some pieces don't match" — C
 
 Still open for reaction: does v2's cut look right, do the seams/shadows feel real enough, drag feel at high piece counts, rotation on touch.
 
+### Iteration 3 (second user reaction, 2026-07-30)
+
+User reactions to v2 → all implemented: (1) rotation ON by default (pieces spawn rotated; `?rot=0` to disable). (2) Border/corner Pieces auto-snap to their absolute frame position when close + upright — a deliberate exception to pure Cluster-merge; frame position wins when an anchored cluster then merges with neighbors. Verified by real drag: corner piece released ~5px off → locked pixel-exact to the frame. (3) Layout refits on window resize (`resize` → rAF → fitView; verified at 375×812: board recentered exactly). (4) Menu bar moved out of the canvas: body is a flex column, Pixi `resizeTo` targets the #app element, `overflow:hidden` + `display:block` guard against stale sizes — canvas bottom == bar top, zero overlap. (5) Seam realism: added scale-aware bevel pass per piece — offset dark inner stroke lower-right + light stroke upper-left over the cut-line stroke and drop shadows.
+
+Play-feel deltas for ticket 06: rotation-default-on and border-frame-snapping are user decisions made here; bevel realism still to be judged (user: "still not looking realistic" pre-bevel — v3 verdict pending).
+
 Validated build facts the plan should keep:
 - Pieces as texture-filled `Graphics` paths (fill `{texture, matrix, textureSpace: 'global'}`) — simpler than hand-rolled meshes; Pixi tessellates internally. `textureSpace: 'global'` is mandatory or every piece gets the whole photo stretched into it.
 - `autoDensity: true` must accompany `resolution: devicePixelRatio`, else the canvas CSS size ≠ renderer size and all pointer mapping breaks.
