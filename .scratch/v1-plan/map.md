@@ -17,6 +17,9 @@ A committed build plan — `SPEC.md` at the repo root — for a client-only web 
 
 <!-- one line per closed ticket: gist + link. Pre-map grilled decisions live in Destination and Out of scope. -->
 
+- [Cut generation approaches](issues/01-cut-generation.md) — roll our own seeded bezier-tab generator on Draradech's CC0 math (no viable library); pieces as SVG path strings → Path2D, sprites clipped once at load, hit-test in piece-local space.
+- [Rendering & interaction tech](issues/02-rendering-tech.md) — PixiJS v8 + vanilla TS + Vite; Pieces as UV-mapped triangulated meshes from one ≤4096² photo atlas (no per-piece masks), Polygon hitArea makes rotation free, Pointer Events for all gestures.
+
 ## Not yet specified
 
 - **Persistence model** — how save/resume, the Library, and best times are stored client-side (storage API, image storage, quotas). Sharpens after [Photo ingestion pitfalls](issues/03-photo-ingestion.md) — quota realities may make it a non-decision.
