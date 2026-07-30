@@ -28,6 +28,10 @@ User reactions to v2 → all implemented: (1) rotation ON by default (pieces spa
 
 Play-feel deltas for ticket 06: rotation-default-on and border-frame-snapping are user decisions made here; bevel realism still to be judged (user: "still not looking realistic" pre-bevel — v3 verdict pending).
 
+### Iteration 4 (third user reaction, 2026-07-30)
+
+(1) Bevels toned down (alpha 0.16/0.11, narrower, smaller offset). (2) User insight: difficulty ≠ just piece count — shape complexity/confusability matters. Exposed the generator's two shape axes as sliders + URL params: **tab** (10–40, Draradech units; small knobs = subtler joins = harder) and **vary** (jitter 0–13; LOW variety = pieces look alike = harder — verified at tab 12/vary 0: near-identical squares). Difficulty space for the plan is now 4-dimensional: piece count × rotation × tab size × shape variety — ticket 06 should fold these into named presets rather than exposing raw sliders in the real app.
+
 Validated build facts the plan should keep:
 - Pieces as texture-filled `Graphics` paths (fill `{texture, matrix, textureSpace: 'global'}`) — simpler than hand-rolled meshes; Pixi tessellates internally. `textureSpace: 'global'` is mandatory or every piece gets the whole photo stretched into it.
 - `autoDensity: true` must accompany `resolution: devicePixelRatio`, else the canvas CSS size ≠ renderer size and all pointer mapping breaks.
