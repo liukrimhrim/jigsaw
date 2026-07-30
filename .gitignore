@@ -2,4 +2,3 @@ node_modules/
 dist/
 # personal photos stay out of history
 /kagemusha.jpg
-public/photo.jpg

@@ -5,7 +5,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>jigsaw core spike</title>
+<meta name="theme-color" content="#1b1b1f" />
+<link rel="icon" href="/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<title>Jigsaw</title>
 <style>
   html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1b1f; }
   body { display: flex; flex-direction: column; }
@@ -89,6 +92,7 @@
   <button id="scatter">scatter</button>
   <button id="recut">re-cut</button>
   <button id="games">games</button>
+  <button id="fs" title="fullscreen">⛶</button>
   <span id="status"></span>
 </div>
 <div id="solved"><div>SOLVED 🎉<div id="solvedtime"></div></div></div>
@@ -122,6 +126,10 @@
       <button id="libclose">close</button>
     </div>
     <div id="libstore" style="color:#777;font-size:12px;margin-top:8px"></div>
+    <div id="installhint" style="color:#9a9;font-size:12px;margin-top:8px">
+      📲 This app installs: Chrome/Edge — “install” icon in the address bar · iPhone/iPad — Share → Add to Home Screen
+      <button id="hintok" style="margin-left:6px">got it</button>
+    </div>
   </div>
 </div>
 <script type="module" src="/src/main.ts"></script>

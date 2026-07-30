@@ -105,10 +105,23 @@ export function initUI(qs: URLSearchParams): void {
     }
   }
   document.getElementById('demo')!.onclick = async () => {
-    const blob = await (await fetch('/photo.jpg')).blob()
-    const ing = await ingestPhoto(blob)
+    const ing = await ingestPhoto(await game.demoBlob())
     hideLib()
-    openNewGame({ kind: 'new', name: 'kagemusha (demo)', ing })
+    openNewGame({ kind: 'new', name: 'demo', ing })
+  }
+
+  document.getElementById('fs')!.onclick = () => {
+    if (document.fullscreenElement) void document.exitFullscreen()
+    else void document.documentElement.requestFullscreen()
+  }
+
+  // install hint: hide once dismissed or when already running installed
+  const standalone = matchMedia('(display-mode: standalone)').matches
+  const hint = document.getElementById('installhint') as HTMLElement
+  hint.style.display = standalone || pref('hintdone', false) ? 'none' : 'block'
+  document.getElementById('hintok')!.onclick = () => {
+    setPref('hintdone', true)
+    hint.style.display = 'none'
   }
 
   // quiet timer
