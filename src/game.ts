@@ -25,6 +25,42 @@ export async function startGame(r: PuzzleRec): Promise<void> {
   board.buildBoard({ w: r.w, h: r.h, cols: r.cols, rows: r.rows, seed: r.seed, tab: r.tab, jit: r.jit }, texture)
   if (!board.applyPoses(r.poses)) board.scatter()
   board.fitView()
+  if (board.isSolved()) updateSolvedText() // restored solved save: banner text, no fanfare
+}
+
+// ---------- timer ----------
+export const fmt = (ms: number): string => {
+  const s = Math.floor(ms / 1000)
+  const m = Math.floor(s / 60)
+  return `${m}:${String(s % 60).padStart(2, '0')}`
+}
+
+let ticks = 0
+/** called once per second by the UI; accrues play time and returns the display string */
+export function tickSecond(): string | null {
+  if (!rec) return null
+  if (!document.hidden && !board.isSolved()) {
+    rec.elapsedMs = (rec.elapsedMs ?? 0) + 1000
+    if (++ticks % 15 === 0) persistSoon() // timer-only progress still saves
+  }
+  return fmt(rec.elapsedMs ?? 0)
+}
+
+function updateSolvedText() {
+  if (!rec) return
+  const e = rec.elapsedMs ?? 0
+  const best = rec.bestMs
+  document.getElementById('solvedtime')!.textContent =
+    best != null && best < e ? `${fmt(e)} · best ${fmt(best)}` : `${fmt(e)} · personal best!`
+}
+
+/** interactive solve: finalize time, best, banner text; caller adds sound/confetti */
+export function handleSolved() {
+  if (!rec) return
+  const e = rec.elapsedMs ?? 0
+  rec.bestMs = rec.bestMs == null ? e : Math.min(rec.bestMs, e)
+  updateSolvedText()
+  persist()
 }
 
 // ---------- persistence ----------

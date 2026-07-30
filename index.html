@@ -22,8 +22,28 @@
   #solved {
     position: fixed; inset: 0; display: none; place-items: center;
     font: bold 48px system-ui; color: #fff; text-shadow: 0 2px 12px #000;
-    pointer-events: none;
+    pointer-events: none; text-align: center;
   }
+  #solvedtime { font: 20px system-ui; margin-top: 8px; color: #cfc; }
+  #timer { min-width: 44px; color: #9a9; font-variant-numeric: tabular-nums; }
+  #newgame {
+    position: fixed; inset: 0; display: none; place-items: center;
+    background: rgba(10,10,14,.75); z-index: 11;
+  }
+  #ngbox {
+    background: #232329; border-radius: 12px; padding: 18px;
+    width: min(92vw, 460px); color: #ddd; font: 14px system-ui;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  #ngbox h2 { margin: 0; font-size: 18px; }
+  #ngpresets { display: flex; gap: 10px; }
+  .preset {
+    flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center;
+    padding: 12px 6px; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  .preset span { font-weight: 400; font-size: 12px; color: #666; }
+  #customx label { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  #ngcancel { align-self: flex-end; }
   #ref {
     position: fixed; top: 12px; right: 12px;
     max-width: 18vw; max-height: 30vh;
@@ -60,24 +80,37 @@
 <div id="app"></div>
 <img id="ref" alt="reference" style="display:none" />
 <div id="bar">
-  <label>pieces
-    <select id="n">
-      <option>12</option><option selected>24</option><option>48</option>
-      <option>96</option><option>192</option><option>300</option>
-    </select>
-  </label>
+  <span id="timer"></span>
   <label><input type="checkbox" id="rot" checked /> rotation</label>
   <label><input type="checkbox" id="ghost" checked /> reference</label>
   <label><input type="checkbox" id="grid" checked /> grid</label>
-  <label>snap <input type="range" id="tol" min="8" max="40" value="18" style="width:70px" /></label>
-  <label title="tab size — smaller knobs are subtler and harder">tab <input type="range" id="tab" min="10" max="40" value="15" style="width:60px" /></label>
-  <label title="shape variety — LOW makes pieces look alike (harder)">vary <input type="range" id="jit" min="0" max="13" value="4" style="width:60px" /></label>
+  <label title="hide loose interior pieces while you build the frame"><input type="checkbox" id="edges" /> edges only</label>
+  <label><input type="checkbox" id="sound" checked /> sound</label>
   <button id="scatter">scatter</button>
-  <button id="recut">new cut</button>
+  <button id="recut">re-cut</button>
   <button id="games">games</button>
   <span id="status"></span>
 </div>
-<div id="solved">SOLVED 🎉</div>
+<div id="solved"><div>SOLVED 🎉<div id="solvedtime"></div></div></div>
+<div id="newgame">
+  <div id="ngbox">
+    <h2>New puzzle</h2>
+    <div id="ngpresets">
+      <button class="preset" id="p-easy">easy<span id="cnt-easy"></span></button>
+      <button class="preset" id="p-medium">medium<span id="cnt-medium"></span></button>
+      <button class="preset" id="p-hard">hard<span id="cnt-hard"></span></button>
+    </div>
+    <label id="chal"><input type="checkbox" id="challenge" /> challenge (≈2.5× pieces)</label>
+    <details id="customx">
+      <summary>custom…</summary>
+      <label>pieces <input type="range" id="n" min="12" max="480" value="24" /> <span id="nval">24</span></label>
+      <label title="tab size — smaller knobs are subtler and harder">tab <input type="range" id="tab" min="10" max="40" value="15" /></label>
+      <label title="shape variety — LOW makes pieces look alike (harder)">vary <input type="range" id="jit" min="0" max="13" value="4" /></label>
+      <button id="customgo">start custom</button>
+    </details>
+    <button id="ngcancel">cancel</button>
+  </div>
+</div>
 <div id="lib">
   <div id="libbox">
     <h2>Puzzles</h2>

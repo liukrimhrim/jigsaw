@@ -4,7 +4,11 @@
 import { Application, Container, Graphics, Matrix, Polygon, Texture } from 'pixi.js'
 import { generateCut, type PieceSpec } from './cut'
 
-export interface BoardCallbacks { onChange(): void }
+export interface BoardCallbacks {
+  onChange(): void
+  onSnap(): void   // a Cluster anchored to the Frame or merged
+  onSolved(): void // interactive solve (not fired when restoring a solved save)
+}
 
 interface Piece {
   g: Graphics
@@ -20,7 +24,7 @@ interface Cluster {
 const app = new Application()
 const world = new Container()
 const bg = new Graphics()
-let cb: BoardCallbacks = { onChange: () => {} }
+let cb: BoardCallbacks = { onChange: () => {}, onSnap: () => {}, onSolved: () => {} }
 
 let ROT = true
 let TOL = 18
@@ -51,8 +55,38 @@ export function getPoses(): [number, number, number][] {
 }
 
 const solvedEl = () => document.getElementById('solved') as HTMLElement
-function checkSolved() {
-  if (isSolved()) solvedEl().style.display = 'grid'
+let solvedNotified = false
+function checkSolved(notify: boolean) {
+  if (!isSolved()) return
+  solvedEl().style.display = 'grid'
+  if (notify && !solvedNotified) {
+    solvedNotified = true
+    cb.onSolved()
+  }
+}
+
+const isBorder = (sp: PieceSpec) =>
+  sp.row === 0 || sp.col === 0 || sp.row === rows - 1 || sp.col === cols - 1
+
+// ---------- edges-only filter ----------
+let edgesOnly = false
+export function setEdgesOnly(v: boolean) {
+  edgesOnly = v
+  applyEdgesFilter()
+  if (!v) {
+    // JE detail: leaving the filter re-floats loose pieces above joined clusters
+    for (const c of clusters) if (c.pieces.length === 1) world.addChild(c.pieces[0].g)
+  }
+}
+function applyEdgesFilter() {
+  for (const c of clusters) {
+    const show = !edgesOnly || c.pieces.some((p) => isBorder(p.spec))
+    for (const m of c.pieces) {
+      m.g.visible = show
+      m.g.eventMode = show ? 'static' : 'none'
+      m.shadow.visible = show
+    }
+  }
 }
 
 // ---------- init ----------
@@ -185,10 +219,11 @@ function rotateCluster(cluster: Cluster, around: Piece) {
 // 2) neighbor-merge clusters, per-axis tolerance
 function snapAround(cluster: Cluster) {
   let anchored = false
+  let didSnap = false
   if (cluster.angle === 0) {
     for (const p of cluster.pieces) {
       const sp = p.spec
-      if (sp.row !== 0 && sp.col !== 0 && sp.row !== rows - 1 && sp.col !== cols - 1) continue
+      if (!isBorder(sp)) continue
       const dx = sp.centroid.x - p.g.x, dy = sp.centroid.y - p.g.y
       if (Math.abs(dx) <= TOL && Math.abs(dy) <= TOL) {
         for (const m of cluster.pieces) { m.g.x += dx; m.g.y += dy }
@@ -221,12 +256,18 @@ function snapAround(cluster: Cluster) {
           clusters.delete(other)
           flash(cluster)
           merged = true
+          didSnap = true
           break outer
         }
       }
     }
   }
-  checkSolved()
+  if (anchored) didSnap = true
+  if (didSnap) {
+    if (edgesOnly) applyEdgesFilter() // merged-into-frame clusters become visible
+    cb.onSnap()
+  }
+  checkSolved(true)
 }
 
 function flash(cluster: Cluster) {
@@ -286,7 +327,7 @@ function rebuildClusters() {
       }
     }
   }
-  checkSolved()
+  checkSolved(false) // restoring a solved save shows the banner, no fanfare
 }
 
 // ---------- board construction ----------
@@ -295,6 +336,8 @@ export interface BoardParams { w: number; h: number; cols: number; rows: number;
 export function buildBoard(p: BoardParams, texture: Texture): void {
   W = p.w; H = p.h; cols = p.cols; rows = p.rows
   BOUNDS = { x0: -0.45 * W, x1: 1.45 * W, y0: -0.45 * H, y1: 1.45 * H }
+  solvedNotified = false
+  edgesOnly = false
 
   for (const c of world.removeChildren()) c.destroy({ children: true })
   solvedEl().style.display = 'none'

@@ -1,60 +1,148 @@
-// Bar controls + library overlay. DOM only; talks to board/game/store.
+// Bar controls, new-game preset dialog, library overlay, confetti.
+// DOM only; talks to board/game/store/sound.
 
 import * as board from './board'
 import * as game from './game'
-import { deletePuzzle, listPuzzles } from './store'
+import * as sound from './sound'
+import { deletePuzzle, ingestPhoto, listPuzzles, type IngestResult } from './store'
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement
 
-const cutOptions = () => ({
-  n: parseInt($('n').value, 10),
-  tab: parseInt($('tab').value, 10),
-  jit: parseInt($('jit').value, 10),
-})
+// ---------- persisted toggles ----------
+const pref = (k: string, def: boolean): boolean => {
+  const v = localStorage.getItem('jig.' + k)
+  return v == null ? def : v === '1'
+}
+const setPref = (k: string, v: boolean) => localStorage.setItem('jig.' + k, v ? '1' : '0')
 
+// ---------- difficulty presets (SPEC tunables) ----------
+const PRESETS = {
+  easy: { n: 24, tab: 18, jit: 8 },
+  medium: { n: 96, tab: 15, jit: 4 },
+  hard: { n: 192, tab: 13, jit: 1 },
+} as const
+type PresetKey = keyof typeof PRESETS
+const CHALLENGE_MULT = 2.5
+
+const effectiveN = (k: PresetKey) =>
+  $('challenge').checked ? Math.round(PRESETS[k].n * CHALLENGE_MULT) : PRESETS[k].n
+
+function refreshPresetLabels() {
+  for (const k of Object.keys(PRESETS) as PresetKey[])
+    document.getElementById('cnt-' + k)!.textContent = `${effectiveN(k)} pieces`
+}
+
+// pending photo waiting for a difficulty choice
+type Pending = { kind: 'new'; name: string; ing: IngestResult } | { kind: 'current' }
+let pending: Pending | null = null
+
+function openNewGame(p: Pending) {
+  pending = p
+  refreshPresetLabels()
+  document.getElementById('newgame')!.style.display = 'grid'
+}
+function closeNewGame() {
+  pending = null
+  document.getElementById('newgame')!.style.display = 'none'
+}
+async function chooseCut(o: game.CutOptions) {
+  const p = pending
+  closeNewGame()
+  if (!p) return
+  if (p.kind === 'current') await game.newFromCurrent(o)
+  else await game.createAndOpen(p.name, p.ing, o)
+}
+
+// ---------- init ----------
 export function initUI(qs: URLSearchParams): void {
-  $('n').value = qs.get('n') ?? '24'
-  $('tab').value = qs.get('tab') ?? '15'
-  $('jit').value = qs.get('jit') ?? '4'
-  const rot = qs.get('rot') !== '0' // rotated by default
+  // toggles: qs override → persisted pref → default
+  const rot = qs.has('rot') ? qs.get('rot') !== '0' : pref('rot', true)
   $('rot').checked = rot
   board.setRot(rot)
-  const tol = parseInt(qs.get('tol') ?? '18', 10)
-  $('tol').value = String(tol)
-  board.setTol(tol)
+  board.setTol(parseInt(qs.get('tol') ?? '18', 10))
+  $('grid').checked = pref('grid', true)
+  board.setGridVisible($('grid').checked)
+  $('ghost').checked = pref('ref', true)
+  $('sound').checked = pref('sound', true)
+  sound.setMuted(!$('sound').checked)
+  $('challenge').checked = pref('challenge', false)
 
-  $('n').onchange = () => { void game.newFromCurrent(cutOptions()) }
-  $('tab').onchange = () => { void game.newFromCurrent(cutOptions()) }
-  $('jit').onchange = () => { void game.newFromCurrent(cutOptions()) }
-  document.getElementById('recut')!.onclick = () => { void game.newFromCurrent(cutOptions()) }
-  $('rot').onchange = () => board.setRot($('rot').checked)
-  $('tol').oninput = () => board.setTol(parseInt($('tol').value, 10))
+  $('rot').onchange = () => { board.setRot($('rot').checked); setPref('rot', $('rot').checked) }
+  $('grid').onchange = () => { board.setGridVisible($('grid').checked); setPref('grid', $('grid').checked) }
   $('ghost').onchange = () => {
-    (document.getElementById('ref') as HTMLElement).style.display =
+    setPref('ref', $('ghost').checked)
+    ;(document.getElementById('ref') as HTMLElement).style.display =
       $('ghost').checked && game.getRec() ? 'block' : 'none'
   }
-  $('grid').onchange = () => board.setGridVisible($('grid').checked)
+  $('sound').onchange = () => { sound.setMuted(!$('sound').checked); setPref('sound', $('sound').checked) }
+  $('edges').onchange = () => board.setEdgesOnly($('edges').checked)
+  $('challenge').onchange = () => { setPref('challenge', $('challenge').checked); refreshPresetLabels() }
+
   document.getElementById('scatter')!.onclick = () => board.scatter()
+  document.getElementById('recut')!.onclick = () => { if (game.getRec()) openNewGame({ kind: 'current' }) }
   document.getElementById('games')!.onclick = () => { void showLib() }
   document.getElementById('libclose')!.onclick = hideLib
+  document.getElementById('ngcancel')!.onclick = closeNewGame
+
+  for (const k of Object.keys(PRESETS) as PresetKey[]) {
+    document.getElementById('p-' + k)!.onclick = () =>
+      { void chooseCut({ n: effectiveN(k), tab: PRESETS[k].tab, jit: PRESETS[k].jit }) }
+  }
+  $('n').oninput = () => { document.getElementById('nval')!.textContent = $('n').value }
+  document.getElementById('customgo')!.onclick = () =>
+    { void chooseCut({ n: parseInt($('n').value, 10), tab: parseInt($('tab').value, 10), jit: parseInt($('jit').value, 10) }) }
+
   $('file').onchange = async () => {
     const f = $('file').files?.[0]
+    $('file').value = ''
     if (!f) return
     try {
-      await game.createFromFile(f, cutOptions())
+      const ing = await ingestPhoto(f)
+      hideLib()
+      openNewGame({ kind: 'new', name: f.name.replace(/\.\w+$/, '') || 'photo', ing })
     } catch {
       alert('could not read that image (HEIC outside Safari needs the planned wasm fallback)')
     }
   }
-  document.getElementById('demo')!.onclick = () => { void game.createDemo(cutOptions()) }
+  document.getElementById('demo')!.onclick = async () => {
+    const blob = await (await fetch('/photo.jpg')).blob()
+    const ing = await ingestPhoto(blob)
+    hideLib()
+    openNewGame({ kind: 'new', name: 'kagemusha (demo)', ing })
+  }
+
+  // quiet timer
+  setInterval(() => {
+    const t = game.tickSecond()
+    document.getElementById('timer')!.textContent = t ?? ''
+  }, 1000)
 }
 
 export function updateStatus(): void {
   const rec = game.getRec()
   const c = board.counts()
   document.getElementById('status')!.textContent = rec
-    ? `${rec.name} · ${c.cols}×${c.rows} = ${c.pieces} pieces · ${c.clusters} clusters · seed ${rec.seed} · tab ${rec.tab} · vary ${rec.jit}`
+    ? `${rec.name} · ${c.cols}×${c.rows} = ${c.pieces} pieces · ${c.clusters} clusters`
     : 'no puzzle open — pick one from games'
+  document.getElementById('timer')!.textContent = rec ? game.fmt(rec.elapsedMs ?? 0) : ''
+}
+
+// ---------- celebration ----------
+export function confetti(): void {
+  const colors = ['#e74c3c', '#f1c40f', '#2ecc71', '#3498db', '#9b59b6', '#e67e22']
+  for (let i = 0; i < 28; i++) {
+    const d = document.createElement('div')
+    d.style.cssText = `position:fixed;z-index:20;width:10px;height:14px;pointer-events:none;` +
+      `left:${Math.random() * 100}vw;top:-20px;background:${colors[i % colors.length]};`
+    document.body.appendChild(d)
+    d.animate(
+      [
+        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+        { transform: `translateY(${60 + Math.random() * 30}vh) rotate(${360 + Math.random() * 540}deg)`, opacity: 0 },
+      ],
+      { duration: 1600 + Math.random() * 900, easing: 'cubic-bezier(.2,.6,.4,1)' },
+    ).onfinish = () => d.remove()
+  }
 }
 
 // ---------- library ----------
@@ -79,7 +167,7 @@ export async function showLib(): Promise<void> {
     name.textContent = r.name
     const meta = document.createElement('div')
     meta.className = 'cmeta'
-    meta.textContent = `${r.cols * r.rows} pieces · ${r.solved ? 'solved ✓' : 'resume'}`
+    meta.textContent = `${r.cols * r.rows} pieces · ${r.solved ? `solved ✓ ${game.fmt(r.bestMs ?? r.elapsedMs ?? 0)}` : 'resume'}`
     const del = document.createElement('button')
     del.className = 'del'
     del.textContent = '✕'

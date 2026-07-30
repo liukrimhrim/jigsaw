@@ -2,6 +2,7 @@
 
 import * as board from './board'
 import * as game from './game'
+import * as sound from './sound'
 import * as ui from './ui'
 import { getPuzzle } from './store'
 
@@ -11,6 +12,12 @@ await board.initBoard(document.getElementById('app')!, {
   onChange: () => {
     ui.updateStatus()
     game.persistSoon()
+  },
+  onSnap: () => sound.click(),
+  onSolved: () => {
+    game.handleSolved()
+    sound.ding()
+    ui.confetti()
   },
 })
 ui.initUI(qs)
