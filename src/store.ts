@@ -54,11 +54,29 @@ export async function deletePuzzle(id: number): Promise<void> {
   await wrap((await store('readwrite')).delete(id))
 }
 
+/** storage pressure info for the Library: usage + whether the origin is persistent */
+export async function storageInfo(): Promise<{ usageMB: number | null; persistent: boolean | null }> {
+  const est = await navigator.storage?.estimate?.().catch(() => null)
+  const persistent = (await navigator.storage?.persisted?.().catch(() => null)) ?? null
+  return {
+    usageMB: est?.usage != null ? Math.round(est.usage / 1048576 * 10) / 10 : null,
+    persistent,
+  }
+}
+
 export interface IngestResult { photo: Blob; thumb: Blob; w: number; h: number }
+
+/** HEIC fallback for non-Safari browsers: lazy wasm decode → ImageBitmap */
+async function decodeHeic(blob: Blob): Promise<ImageBitmap> {
+  const { default: decode } = await import('heic-decode')
+  const { width, height, data } = await decode({ buffer: new Uint8Array(await blob.arrayBuffer()) })
+  return createImageBitmap(new ImageData(new Uint8ClampedArray(data), width, height))
+}
 
 /** file/blob → EXIF-corrected, ≤2048 long edge JPEG + 256px thumb */
 export async function ingestPhoto(blob: Blob): Promise<IngestResult> {
   const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' })
+    .catch(() => decodeHeic(blob))
   const scale = Math.min(1, 2048 / Math.max(bmp.width, bmp.height))
   const enc = (s: number) => {
     const c = document.createElement('canvas')

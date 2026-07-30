@@ -4,7 +4,7 @@ import * as board from './board'
 import * as game from './game'
 import * as sound from './sound'
 import * as ui from './ui'
-import { getPuzzle } from './store'
+import { getPuzzle, ingestPhoto } from './store'
 
 const qs = new URLSearchParams(location.search)
 
@@ -40,4 +40,5 @@ ui.updateStatus()
 ;(window as unknown as Record<string, unknown>).__spike = {
   get rec() { return game.getRec() },
   board: board.debug,
+  ingestPhoto,
 }

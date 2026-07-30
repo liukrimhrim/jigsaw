@@ -4,7 +4,7 @@
 import * as board from './board'
 import * as game from './game'
 import * as sound from './sound'
-import { deletePuzzle, ingestPhoto, listPuzzles, type IngestResult } from './store'
+import { deletePuzzle, ingestPhoto, listPuzzles, storageInfo, type IngestResult } from './store'
 
 const $ = (id: string) => document.getElementById(id) as HTMLInputElement
 
@@ -184,6 +184,11 @@ export async function showLib(): Promise<void> {
   ;(document.getElementById('libempty') as HTMLElement).style.display = all.length ? 'none' : 'block'
   ;(document.getElementById('libclose') as HTMLElement).style.display = game.getRec() ? 'inline-block' : 'none'
   libEl().style.display = 'grid'
+
+  const info = await storageInfo()
+  document.getElementById('libstore')!.textContent =
+    (info.usageMB != null ? `${info.usageMB} MB stored` : '') +
+    (info.persistent === false ? ' · ⚠ not persistent — the browser may evict saves after long inactivity' : '')
 }
 
 export function hideLib(): void { libEl().style.display = 'none' }

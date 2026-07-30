@@ -106,11 +106,12 @@ export async function initBoard(el: HTMLElement, callbacks: BoardCallbacks): Pro
   bg.on('pointerdown', (e) => {
     pointers.set(e.pointerId, { x: e.global.x, y: e.global.y })
     if (pointers.size === 2) {
+      if (drag) { snapAround(drag.cluster); cb.onChange() } // drop the piece cleanly, then pinch
+      drag = null
       const [a, b] = [...pointers.values()]
       pinchBase = { d: Math.hypot(a.x - b.x, a.y - b.y), s: world.scale.x }
-      drag = null
     } else if (!drag) {
-      pan = { lastX: e.global.x, lastY: e.global.y }
+      pan = { pointerId: e.pointerId, lastX: e.global.x, lastY: e.global.y }
     }
   })
   app.stage.on('pointermove', (e) => {
@@ -122,7 +123,7 @@ export async function initBoard(el: HTMLElement, callbacks: BoardCallbacks): Pro
       zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, (pinchBase.s * d) / pinchBase.d)
       return
     }
-    if (drag) {
+    if (drag && e.pointerId === drag.pointerId) {
       let dx = (e.global.x - drag.lastX) / world.scale.x
       let dy = (e.global.y - drag.lastY) / world.scale.y
       drag.moved += Math.abs(e.global.x - drag.lastX) + Math.abs(e.global.y - drag.lastY)
@@ -134,7 +135,7 @@ export async function initBoard(el: HTMLElement, callbacks: BoardCallbacks): Pro
       if (dy > 0) dy = Math.min(dy, Math.max(0, BOUNDS.y1 - t.y))
       else dy = Math.max(dy, Math.min(0, BOUNDS.y0 - t.y))
       for (const m of drag.cluster.pieces) { m.g.x += dx; m.g.y += dy }
-    } else if (pan) {
+    } else if (pan && e.pointerId === pan.pointerId) {
       world.x += e.global.x - pan.lastX
       world.y += e.global.y - pan.lastY
       pan.lastX = e.global.x; pan.lastY = e.global.y
@@ -173,27 +174,29 @@ function zoomAt(gx: number, gy: number, scale: number) {
 }
 
 // ---------- pointers ----------
-interface Drag { cluster: Cluster; tapped: Piece; lastX: number; lastY: number; moved: number }
+interface Drag { pointerId: number; cluster: Cluster; tapped: Piece; lastX: number; lastY: number; moved: number }
 let drag: Drag | null = null
-let pan: { lastX: number; lastY: number } | null = null
+let pan: { pointerId: number; lastX: number; lastY: number } | null = null
 const pointers = new Map<number, { x: number; y: number }>()
 let pinchBase: { d: number; s: number } | null = null
 
-function startDrag(piece: Piece, gx: number, gy: number) {
-  drag = { cluster: piece.cluster, tapped: piece, lastX: gx, lastY: gy, moved: 0 }
+function startDrag(piece: Piece, pointerId: number, gx: number, gy: number) {
+  if (drag) return // a second finger on a piece must not steal the active drag
+  pointers.set(pointerId, { x: gx, y: gy })
+  drag = { pointerId, cluster: piece.cluster, tapped: piece, lastX: gx, lastY: gy, moved: 0 }
   for (const m of piece.cluster.pieces) world.addChild(m.g) // bring to front
 }
 
 function endPointer(e: { pointerId: number }) {
   pointers.delete(e.pointerId)
   if (pointers.size < 2) pinchBase = null
-  if (drag) {
+  if (drag && e.pointerId === drag.pointerId) {
     if (ROT && drag.moved < 8) rotateCluster(drag.cluster, drag.tapped)
     else snapAround(drag.cluster)
     drag = null
     cb.onChange()
   }
-  pan = null
+  if (pan && e.pointerId === pan.pointerId) pan = null
 }
 
 // ---------- rotation ----------
@@ -397,7 +400,7 @@ export function buildBoard(p: BoardParams, texture: Texture): void {
     pieces.push(piece)
     g.on('pointerdown', (e) => {
       e.stopPropagation()
-      startDrag(piece, e.global.x, e.global.y)
+      startDrag(piece, e.pointerId, e.global.x, e.global.y)
     })
   }
 }
