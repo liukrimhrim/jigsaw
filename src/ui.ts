@@ -68,17 +68,20 @@ export function initUI(qs: URLSearchParams): void {
   board.setTol(parseInt(qs.get('tol') ?? '18', 10))
   $('grid').checked = pref('grid', true)
   board.setGridVisible($('grid').checked)
-  $('ghost').checked = pref('ref', true)
+  // reference mode: side thumbnail / ghost under the board / off (legacy bool migrates)
+  const refmode = localStorage.getItem('jig.refmode') ??
+    (localStorage.getItem('jig.ref') === '0' ? 'off' : 'side')
+  ;($('refmode') as unknown as HTMLSelectElement).value = refmode
+  applyRefMode()
   $('sound').checked = pref('sound', true)
   sound.setMuted(!$('sound').checked)
   $('challenge').checked = pref('challenge', false)
 
   $('rot').onchange = () => { board.setRot($('rot').checked); setPref('rot', $('rot').checked) }
   $('grid').onchange = () => { board.setGridVisible($('grid').checked); setPref('grid', $('grid').checked) }
-  $('ghost').onchange = () => {
-    setPref('ref', $('ghost').checked)
-    ;(document.getElementById('ref') as HTMLElement).style.display =
-      $('ghost').checked && game.getRec() ? 'block' : 'none'
+  $('refmode').onchange = () => {
+    localStorage.setItem('jig.refmode', $('refmode').value)
+    applyRefMode()
   }
   $('sound').onchange = () => { sound.setMuted(!$('sound').checked); setPref('sound', $('sound').checked) }
   $('edges').onchange = () => board.setEdgesOnly($('edges').checked)
@@ -157,6 +160,13 @@ export function initUI(qs: URLSearchParams): void {
     const t = game.tickSecond()
     document.getElementById('timer')!.textContent = t ?? ''
   }, 1000)
+}
+
+export function applyRefMode(): void {
+  const mode = ($('refmode') as unknown as HTMLSelectElement).value
+  ;(document.getElementById('ref') as HTMLElement).style.display =
+    mode === 'side' && game.getRec() ? 'block' : 'none'
+  board.setGhostVisible(mode === 'ghost')
 }
 
 export function updateStatus(): void {

@@ -56,8 +56,7 @@ export async function startGame(r: PuzzleRec): Promise<void> {
   const ref = document.getElementById('ref') as HTMLImageElement
   if (refURL) URL.revokeObjectURL(refURL)
   refURL = URL.createObjectURL(r.photo)
-  ref.src = refURL
-  ref.style.display = (document.getElementById('ghost') as HTMLInputElement).checked ? 'block' : 'none'
+  ref.src = refURL // visibility is ui.applyRefMode's job (side/ghost/off)
 
   board.buildBoard({ w: r.w, h: r.h, cols: r.cols, rows: r.rows, seed: r.seed, tab: r.tab, jit: r.jit, ...backdrop }, texture)
   if (!board.applyPoses(r.poses)) board.scatter()

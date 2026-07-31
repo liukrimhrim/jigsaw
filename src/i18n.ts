@@ -5,6 +5,9 @@
 const en: Record<string, string> = {
   rotation: 'rotation',
   reference: 'reference',
+  refSide: 'side',
+  refGhost: 'ghost',
+  refOff: 'off',
   grid: 'grid',
   edgesOnly: 'edges only',
   edgesTitle: 'hide loose interior pieces while you build the frame',
@@ -49,6 +52,9 @@ const en: Record<string, string> = {
 const zh: Record<string, string> = {
   rotation: '旋轉',
   reference: '參考圖',
+  refSide: '側邊',
+  refGhost: '底圖',
+  refOff: '關閉',
   grid: '格線',
   edgesOnly: '只看邊塊',
   edgesTitle: '先拼邊框：暫時隱藏散落的內部拼圖塊',

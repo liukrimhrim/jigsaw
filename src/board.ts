@@ -1,7 +1,7 @@
 // Pixi board + interaction: pieces, drag/pan/pinch, snapping, rotation, scatter.
 // Owns all render-side state; reports mutations through BoardCallbacks.onChange.
 
-import { Application, Container, Graphics, Matrix, Polygon, Texture } from 'pixi.js'
+import { Application, Container, Graphics, Matrix, Polygon, Sprite, Texture } from 'pixi.js'
 import { generateCut, type PieceSpec } from './cut'
 
 export interface BoardCallbacks {
@@ -37,12 +37,18 @@ let clusters = new Set<Cluster>()
 let BOUNDS = { x0: 0, x1: 1, y0: 0, y1: 1 }
 let gridG: Graphics | null = null
 let gridVisible = true
+let ghostSprite: Sprite | null = null
+let ghostOn = false
 
 export function setRot(v: boolean) { ROT = v }
 export function setTol(v: number) { TOL = v }
 export function setGridVisible(v: boolean) {
   gridVisible = v
   if (gridG) gridG.visible = v
+}
+export function setGhostVisible(v: boolean) {
+  ghostOn = v
+  if (ghostSprite) ghostSprite.visible = v
 }
 export function counts() {
   return { pieces: pieces.length, clusters: clusters.size, cols, rows }
@@ -359,6 +365,12 @@ export function buildBoard(p: BoardParams, texture: Texture): void {
     .fill({ color: overlay, alpha: 0.045 })
     .stroke({ width: 3, color: overlay, alpha: 0.15 })
   world.addChild(boardMark)
+
+  // ghost reference mode: the photo faint under the working area (1:1 with the board)
+  ghostSprite = new Sprite(texture)
+  ghostSprite.alpha = 0.16
+  ghostSprite.visible = ghostOn
+  world.addChild(ghostSprite)
 
   gridG = new Graphics()
   for (let xi = 1; xi < cols; xi++) gridG.moveTo(xi * (W / cols), 0).lineTo(xi * (W / cols), H)

@@ -42,6 +42,7 @@ async function boot() {
     }
   }
   if (!opened) await ui.showLib()
+  ui.applyRefMode()
   ui.updateStatus()
 }
 boot().catch((e: unknown) => {
