@@ -101,6 +101,14 @@
       <option value="off" data-i18n="refOff">off</option>
     </select>
   </label>
+  <label><span data-i18n="background">background</span>
+    <select id="bgmode">
+      <option value="auto" data-i18n="bgAuto">auto</option>
+      <option value="custom" data-i18n="bgCustom">image</option>
+      <option value="pick" data-i18n="bgPick">choose…</option>
+    </select>
+  </label>
+  <input type="file" id="bgfile" accept="image/*" hidden />
   <label><input type="checkbox" id="grid" checked /> <span data-i18n="grid">grid</span></label>
   <label data-i18n-title="edgesTitle"><input type="checkbox" id="edges" /> <span data-i18n="edgesOnly">edges only</span></label>
   <label><input type="checkbox" id="sound" checked /> <span data-i18n="sound">sound</span></label>

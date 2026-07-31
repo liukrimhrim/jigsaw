@@ -11,8 +11,7 @@ let refURL: string | null = null
 
 export function getRec() { return rec }
 
-/** mean color of the photo → muted backdrop with opposite lightness (contrast) */
-function paletteBackdrop(bmp: ImageBitmap | HTMLImageElement): { bgColor: number; onLight: boolean } {
+function meanRGB(bmp: ImageBitmap | HTMLImageElement): { r: number; g: number; b: number; lum: number } {
   const c = document.createElement('canvas')
   c.width = c.height = 16
   const x = c.getContext('2d')!
@@ -22,7 +21,12 @@ function paletteBackdrop(bmp: ImageBitmap | HTMLImageElement): { bgColor: number
   for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2] }
   const n = d.length / 4
   r /= n * 255; g /= n * 255; b /= n * 255
-  const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+  return { r, g, b, lum: 0.2126 * r + 0.7152 * g + 0.0722 * b }
+}
+
+/** mean color of the photo → muted backdrop with opposite lightness (contrast) */
+function paletteBackdrop(bmp: ImageBitmap | HTMLImageElement): { bgColor: number; onLight: boolean } {
+  const { r, g, b, lum } = meanRGB(bmp)
   // hue of the mean color (harmonious), saturation muted, lightness flipped
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dl = mx - mn
   let h = 0
@@ -46,12 +50,32 @@ function paletteBackdrop(bmp: ImageBitmap | HTMLImageElement): { bgColor: number
   return { bgColor: (to255(f(0)) << 16) | (to255(f(8)) << 8) | to255(f(4)), onLight }
 }
 
+/** custom backdrop image → downscaled data-URL + whether it's light (for overlays) */
+export async function makeBgImage(blob: Blob): Promise<{ url: string; onLight: boolean }> {
+  const bmp = await decodePhoto(blob)
+  const bw = bmp instanceof HTMLImageElement ? bmp.naturalWidth : bmp.width
+  const bh = bmp instanceof HTMLImageElement ? bmp.naturalHeight : bmp.height
+  const s = Math.min(1, 1600 / Math.max(bw, bh))
+  const c = document.createElement('canvas')
+  c.width = Math.max(1, Math.round(bw * s))
+  c.height = Math.max(1, Math.round(bh * s))
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+  const url = c.toDataURL('image/jpeg', 0.8)
+  const onLight = meanRGB(bmp).lum >= 0.5 // the image IS the backdrop here
+  if (bmp instanceof ImageBitmap) bmp.close()
+  return { url, onLight }
+}
+
 export async function startGame(r: PuzzleRec): Promise<void> {
   rec = r
   const bmp = await decodePhoto(r.photo) // Safari-safe decode chain
   texture?.destroy(true)
   texture = Texture.from(bmp)
-  const backdrop = paletteBackdrop(bmp)
+  const customBg = localStorage.getItem('jig.bgmode') === 'custom' && !!localStorage.getItem('jig.bgimg')
+  board.setTransparent(customBg)
+  const backdrop = customBg
+    ? { bgColor: 0x1b1b1f, onLight: localStorage.getItem('jig.bgLight') === '1' }
+    : paletteBackdrop(bmp)
 
   const ref = document.getElementById('ref') as HTMLImageElement
   if (refURL) URL.revokeObjectURL(refURL)

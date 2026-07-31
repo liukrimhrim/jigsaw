@@ -83,6 +83,34 @@ export function initUI(qs: URLSearchParams): void {
     localStorage.setItem('jig.refmode', $('refmode').value)
     applyRefMode()
   }
+
+  applyBackground()
+  $('bgmode').onchange = () => {
+    const v = $('bgmode').value
+    if (v === 'pick' || (v === 'custom' && !localStorage.getItem('jig.bgimg'))) {
+      $('bgfile').click() // picker continues the flow; applyBackground resets on cancel
+      return
+    }
+    localStorage.setItem('jig.bgmode', v)
+    applyBackground()
+    if (game.getRec()) location.reload() // canvas transparency + overlays are per-build
+  }
+  $('bgfile').onchange = async () => {
+    const f = $('bgfile').files?.[0]
+    $('bgfile').value = ''
+    if (!f) { applyBackground(); return }
+    try {
+      const { url, onLight } = await game.makeBgImage(f)
+      localStorage.setItem('jig.bgimg', url)
+      localStorage.setItem('jig.bgLight', onLight ? '1' : '0')
+      localStorage.setItem('jig.bgmode', 'custom')
+      applyBackground()
+      if (game.getRec()) location.reload()
+    } catch {
+      alert(t('heicFail'))
+      applyBackground()
+    }
+  }
   $('sound').onchange = () => { sound.setMuted(!$('sound').checked); setPref('sound', $('sound').checked) }
   $('edges').onchange = () => board.setEdgesOnly($('edges').checked)
   $('challenge').onchange = () => { setPref('challenge', $('challenge').checked); refreshPresetLabels() }
@@ -160,6 +188,14 @@ export function initUI(qs: URLSearchParams): void {
     const t = game.tickSecond()
     document.getElementById('timer')!.textContent = t ?? ''
   }, 1000)
+}
+
+export function applyBackground(): void {
+  const img = localStorage.getItem('jig.bgimg')
+  const active = localStorage.getItem('jig.bgmode') === 'custom' && !!img
+  document.getElementById('app')!.style.background =
+    active ? `#141418 url(${img}) center / cover no-repeat` : ''
+  ;($('bgmode') as unknown as HTMLSelectElement).value = active ? 'custom' : 'auto'
 }
 
 export function applyRefMode(): void {

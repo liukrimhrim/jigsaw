@@ -39,6 +39,9 @@ let gridG: Graphics | null = null
 let gridVisible = true
 let ghostSprite: Sprite | null = null
 let ghostOn = false
+let transparentBg = false // custom background image shows through the canvas
+
+export function setTransparent(v: boolean) { transparentBg = v }
 
 export function setRot(v: boolean) { ROT = v }
 export function setTol(v: number) { TOL = v }
@@ -353,9 +356,11 @@ export function buildBoard(p: BoardParams, texture: Texture): void {
   solvedNotified = false
   edgesOnly = false
 
-  // palette-adaptive backdrop: renderer clear color + the pan-surface rect
+  // backdrop: palette color, or transparent so the custom CSS image shows through
   app.renderer.background.color = p.bgColor
-  bg.clear().rect(-16000, -16000, 32000, 32000).fill(p.bgColor)
+  app.renderer.background.alpha = transparentBg ? 0 : 1
+  bg.clear().rect(-16000, -16000, 32000, 32000)
+    .fill({ color: p.bgColor, alpha: transparentBg ? 0.0001 : 1 }) // near-0 keeps the pan surface hittable
   const overlay = p.onLight ? 0x000000 : 0xffffff // board markings must read on either
 
   for (const c of world.removeChildren()) c.destroy({ children: true })
