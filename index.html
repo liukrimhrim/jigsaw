@@ -1,0 +1,161 @@
+<!doctype html>
+<!-- PROTOTYPE — core spike (v1-plan ticket 05). Throwaway: answers "does seeded
+     bezier-tab cut + Pixi rendering feel right to drag, snap, rotate?" -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#1b1b1f" />
+<link rel="icon" href="/jigsaw/icon-192.png" />
+<link rel="apple-touch-icon" href="/jigsaw/icon-192.png" />
+<title>Jigsaw</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1b1b1f; }
+  body { display: flex; flex-direction: column; }
+  #app { flex: 1; min-height: 0; position: relative; touch-action: none; overflow: hidden; }
+  #app canvas { display: block; }
+  #bar {
+    flex: none;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: center;
+    background: rgba(20,20,24,.85); color: #ddd; font: 13px system-ui;
+    padding: 8px 12px;
+  }
+  #bar label { display: flex; gap: 4px; align-items: center; white-space: nowrap; }
+  #status { color: #9a9; }
+  #solved {
+    position: fixed; inset: 0; display: none; place-items: center;
+    font: bold 48px system-ui; color: #fff; text-shadow: 0 2px 12px #000;
+    pointer-events: none; text-align: center;
+  }
+  #solvedtime { font: 20px system-ui; margin-top: 8px; color: #cfc; }
+  #timer { min-width: 44px; color: #9a9; font-variant-numeric: tabular-nums; }
+  #newgame {
+    position: fixed; inset: 0; display: none; place-items: center;
+    background: rgba(10,10,14,.75); z-index: 11;
+  }
+  #ngbox {
+    background: #232329; border-radius: 12px; padding: 18px;
+    width: min(92vw, 460px); color: #ddd; font: 14px system-ui;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  #ngbox h2 { margin: 0; font-size: 18px; }
+  #ngpresets { display: flex; gap: 10px; }
+  .preset {
+    flex: 1; display: flex; flex-direction: column; gap: 4px; align-items: center;
+    padding: 12px 6px; font-weight: 700; font-size: 15px; cursor: pointer;
+  }
+  .preset span { font-weight: 400; font-size: 12px; color: #666; }
+  #customx label { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+  #ngcancel { align-self: flex-end; }
+  #ref {
+    position: fixed; top: 12px; right: 12px;
+    max-width: 18vw; max-height: 30vh;
+    border: 2px solid rgba(255,255,255,.25); border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    cursor: zoom-in;
+  }
+  #loupe {
+    position: fixed; display: none; z-index: 5;
+    width: 280px; height: 280px;
+    border: 2px solid rgba(255,255,255,.3); border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.55);
+    background-repeat: no-repeat; background-color: #111;
+    pointer-events: none;
+  }
+  #lib {
+    position: fixed; inset: 0; display: none; place-items: center;
+    background: rgba(10,10,14,.75); z-index: 10;
+  }
+  #libbox {
+    background: #232329; border-radius: 12px; padding: 18px;
+    width: min(92vw, 640px); max-height: 80vh; overflow: auto;
+    color: #ddd; font: 14px system-ui;
+  }
+  #libbox h2 { margin: 0 0 6px; font-size: 18px; }
+  #cards {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px; margin: 12px 0;
+  }
+  .card { background: #2c2c33; border-radius: 8px; padding: 8px; cursor: pointer; position: relative; }
+  .card img { width: 100%; border-radius: 6px; display: block; }
+  .cname { margin-top: 6px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmeta { color: #9a9; font-size: 12px; }
+  .card .del { position: absolute; top: 4px; right: 4px; }
+  #librow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    background: #3a3a44; border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  }
+</style>
+  <script type="module" crossorigin src="/jigsaw/assets/index-C6vt3SGb.js"></script>
+<link rel="manifest" href="/jigsaw/manifest.webmanifest"></head>
+<body>
+<div id="app"></div>
+<img id="ref" alt="reference" style="display:none" />
+<div id="loupe"></div>
+<div id="bar">
+  <span id="timer"></span>
+  <label><input type="checkbox" id="rot" checked /> <span data-i18n="rotation">rotation</span></label>
+  <label><span data-i18n="reference">reference</span>
+    <select id="refmode">
+      <option value="side" data-i18n="refSide">side</option>
+      <option value="ghost" data-i18n="refGhost">ghost</option>
+      <option value="off" data-i18n="refOff">off</option>
+    </select>
+  </label>
+  <label><span data-i18n="background">background</span>
+    <select id="bgmode">
+      <option value="auto" data-i18n="bgAuto">auto</option>
+      <option value="custom" data-i18n="bgCustom">image</option>
+      <option value="pick" data-i18n="bgPick">choose…</option>
+    </select>
+  </label>
+  <input type="file" id="bgfile" accept="image/*" hidden />
+  <label><input type="checkbox" id="grid" checked /> <span data-i18n="grid">grid</span></label>
+  <label data-i18n-title="edgesTitle"><input type="checkbox" id="edges" /> <span data-i18n="edgesOnly">edges only</span></label>
+  <label><input type="checkbox" id="sound" checked /> <span data-i18n="sound">sound</span></label>
+  <button id="scatter" data-i18n="scatter">scatter</button>
+  <button id="recut" data-i18n="recut">re-cut</button>
+  <button id="games" data-i18n="games">puzzles</button>
+  <button id="fs" title="fullscreen">⛶</button>
+  <button id="lang">中</button>
+  <span id="status"></span>
+</div>
+<div id="solved"><div><span data-i18n="solvedBanner">SOLVED 🎉</span><div id="solvedtime"></div></div></div>
+<div id="newgame">
+  <div id="ngbox">
+    <h2 data-i18n="ngTitle">New puzzle</h2>
+    <div id="ngpresets">
+      <button class="preset" id="p-easy"><span data-i18n="easy">easy</span><span id="cnt-easy"></span></button>
+      <button class="preset" id="p-medium"><span data-i18n="medium">medium</span><span id="cnt-medium"></span></button>
+      <button class="preset" id="p-hard"><span data-i18n="hard">hard</span><span id="cnt-hard"></span></button>
+    </div>
+    <label id="chal"><input type="checkbox" id="challenge" /> <span data-i18n="challenge">challenge (≈2.5× pieces)</span></label>
+    <details id="customx">
+      <summary data-i18n="customSummary">custom…</summary>
+      <label><span data-i18n="piecesLabel">pieces</span> <input type="range" id="n" min="12" max="480" value="24" /> <span id="nval">24</span></label>
+      <label data-i18n-title="tabTitle"><span data-i18n="tabLabel">tab</span> <input type="range" id="tab" min="10" max="40" value="15" /></label>
+      <label data-i18n-title="varyTitle"><span data-i18n="varyLabel">vary</span> <input type="range" id="jit" min="0" max="13" value="4" /></label>
+      <button id="customgo" data-i18n="startCustom">start custom</button>
+    </details>
+    <button id="ngcancel" data-i18n="cancel">cancel</button>
+  </div>
+</div>
+<div id="lib">
+  <div id="libbox">
+    <h2 data-i18n="libTitle">Puzzles</h2>
+    <div id="libempty" data-i18n="libEmpty">No puzzles yet — add a photo or try the demo image.</div>
+    <div id="cards"></div>
+    <div id="librow">
+      <label class="btn"><span data-i18n="newFromPhoto">+ new from photo</span><input type="file" id="file" accept="image/*" hidden /></label>
+      <button id="demo" data-i18n="demoImage">demo image</button>
+      <button id="libclose" data-i18n="close">close</button>
+    </div>
+    <div id="libstore" style="color:#777;font-size:12px;margin-top:8px"></div>
+    <div id="installhint" style="color:#9a9;font-size:12px;margin-top:8px">
+      <span data-i18n="installHint">📲 This app installs: Chrome/Edge — “install” icon in the address bar · iPhone/iPad — Share → Add to Home Screen</span>
+      <button id="hintok" style="margin-left:6px" data-i18n="gotIt">got it</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
